@@ -1,0 +1,14 @@
+version: 1
+packages:
+  - path: "./birdai"
+    questions:
+      - functionName: IsABird
+        prompt: Is the text about a bird? 
+        output: bool
+      - functionName: ParseBird
+        prompt: Can you parse the details of the bird? 
+        output: github.com/troylelandshields/hardconversations/samples/birdfinder/bird
+      - functionName: DescribeBird 
+        input: github.com/troylelandshields/hardconversations/samples/birdfinder/bird
+        output: string # default output
+        prompt: Describe the bird with the given properties and add a fun fact (make it up if you have to)

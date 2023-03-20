@@ -1,0 +1,4 @@
+github.com/pkg/errors v0.9.1 h1:FEBLx1zS214owpjy7qsBeixbURkuhQAwrK5UwLGTwt4=
+github.com/pkg/errors v0.9.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
+github.com/sashabaranov/go-openai v1.5.3 h1:o6n6dj0h9u+5mE1m+D8eT0zYhh7229o8ymDd2zDwAXU=
+github.com/sashabaranov/go-openai v1.5.3/go.mod h1:lj5b/K+zjTSFxVLijLSTDZuP7adOgerWeFyZLUhAKRg=

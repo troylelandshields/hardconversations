@@ -1,0 +1,16 @@
+version: 1
+packages:
+  - path: "./moderatorai"
+    instruction: |
+      Given the rules of a community and a piece of text, you are able to determine how likely it is that the text breaks the rules.
+    questions:
+      - functionName: LikelihoodToBreakRules
+        prompt: How likely is it that the text breaks the rules? (Answer must be an integer between 0 and 100)
+        input: string # ?? or should it ust be added when using AddText? 
+        output: int
+      - functionName: WhichRulesDoesItBreak
+        prompt: Which rule numbers does the text break? (Answer must be a comma-separated list of integers)
+        output: string # TODO: support []int
+      - functionName: WhyDoesItBreakTheRules
+        prompt: Why does it break the rules?
+        output: string
