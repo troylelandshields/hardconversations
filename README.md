@@ -53,7 +53,7 @@ packages:
 Generates a client that you can use like this:
 
 ```go
-autoModClient := moderatorai.NewClient(openAIKey)
+	autoModClient := moderatorai.NewClient(openAIKey)
 	autoModClient.WithText(theRules)
 	t := autoModClient.NewThread()
 
