@@ -44,7 +44,7 @@ packages:
         output: int
       - functionName: WhichRulesDoesItBreak # to flag specific rules in the UI
         prompt: Which rule numbers does the text break? (Answer must be a comma-separated list of integers)
-        output: string
+        output: []int
       - functionName: WhyDoesItBreakTheRules # to show an explanation to users
         prompt: Why does it break the rules?
         output: string
