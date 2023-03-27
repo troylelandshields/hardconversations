@@ -31,13 +31,10 @@ conversations:
 
 ```go
 likelihood, _, err := t.LikelihoodToBreakRules(ctx, `"The thing that I love about Fight Club posting pictures online."`)
-// likelihood, _, err := t.LikelihoodToBreakRules(ctx, `"I like to hang out with my friends and do nothing in particular at all."`)
 if err != nil {
   fmt.Println("error:", err)
   os.Exit(1)
 }
-
-fmt.Println("likelihood:", likelihood)
 
 if likelihood < 50 {
   fmt.Println("no rule breaking here")
