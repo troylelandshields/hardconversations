@@ -14,6 +14,7 @@ go install github.com/troylelandshields/hardconversations/cmd/hardc
 ### Usage
 
 ```bash
+hardc generate # defaults to hardc.yaml
 hardc generate -f path/to/file.yaml
 ```
 
@@ -97,9 +98,9 @@ Generates a client that you can use like this:
 
 ## More Samples
 
-* Inbreddit Automoderator
-* Bird-finder
-* AI Recruiter
+* [Inbreddit Automoderator](https://github.com/troylelandshields/hardconversations/tree/main/samples/moderator)
+* [AI Recruiter](https://github.com/troylelandshields/hardconversations/tree/main/samples/recruiter)
+* [Bird-finder](https://github.com/troylelandshields/hardconversations/tree/main/samples/birdfinder)
 * TODO: HotDog/NotHotDog (once I have access to the ChatGPT4 and can use images as an input)
 
 ## Acknowledgements	

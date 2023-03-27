@@ -56,13 +56,13 @@ func readConfig(stderr io.Writer, dir, filename string) (string, *config.Config,
 		}
 
 		if yamlMissing && jsonMissing {
-			fmt.Fprintln(stderr, "error parsing configuration files. sqlc.yaml or sqlc.json: file does not exist")
+			fmt.Fprintln(stderr, "error parsing configuration files. hardc.yaml: file does not exist")
 			return "", nil, errors.New("config file missing")
 		}
 
 		if !yamlMissing && !jsonMissing {
-			fmt.Fprintln(stderr, "error: both sqlc.json and sqlc.yaml files present")
-			return "", nil, errors.New("sqlc.json and sqlc.yaml present")
+			fmt.Fprintln(stderr, "error: both hardc.yaml files present")
+			return "", nil, errors.New("hardc.yaml present")
 		}
 
 		configPath = yamlPath
