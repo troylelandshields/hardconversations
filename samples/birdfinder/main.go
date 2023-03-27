@@ -20,38 +20,37 @@ func main() {
 
 	t := birdFinderClient.NewThread()
 
-	t.WithText("An african swallow can carry a coconut.")
-	// t.WithText("The bird is trapped in a cage.")
-
-	// t.WithEmbeddedText("")
-	// t.WithImage("")
-	// t.WithTextSource() // takes an interface that returns sorted relevant text from somewhere
+	// str := "I still live with my mom and dad. I'm 35 years old. They were probably expecting an empty nest at this point, but I need to save money on rent."
+	// str := "An african swallow can carry a coconut."
+	// str := "The bird is trapped in a cage."
+	// str := "The Andean Condor and the American Bald Eagle are both birds of prey, but they live in different parts of the world. The former is native to South America, whereas the latter is native to North America. The Andean Condor is the largest flying bird in the world, with a wingspan of up to 3.2 meters (10.5 feet). The American Bald Eagle is the national bird of the United States of America."
 	// t.WithImageSource() ?
 
-	isBird, md, err := t.IsABird(ctx)
+	birdCount, _, err := t.CountBirds(ctx, str)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-	fmt.Println(md)
 
-	if !isBird {
+	if birdCount == 0 {
 		fmt.Println("no bird here")
 		return
 	}
 
-	bird, _, err := t.ParseBird(ctx)
+	birds, _, err := t.ParseBird(ctx)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
 
-	fmt.Printf("%+v\n", bird)
+	for i, bird := range birds {
+		fmt.Printf("%d. %+v\n", i+1, bird)
 
-	desc, _, err := t.DescribeBird(ctx, bird)
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		// desc, _, err := t.DescribeBird(ctx, bird)
+		// if err != nil {
+		// 	fmt.Println(err)
+		// 	os.Exit(1)
+		// }
+		// fmt.Println(desc)
 	}
-	fmt.Println(desc)
 }

@@ -25,11 +25,11 @@ func main() {
 	autoModClient := moderatorai.NewClient(openAIKey)
 	ctx := context.Background()
 
-	autoModClient.WithText(theRules)
+	autoModClient.AddSourceText(theRules)
 
 	t := autoModClient.NewThread()
 
-	likelihood, _, err := t.LikelihoodToBreakRules(ctx, `"The thing that I love about Fight Club is getting out my aggression and posting pictures online."`)
+	likelihood, _, err := t.LikelihoodToBreakRules(ctx, `"The thing that I love about Fight Club posting pictures online."`)
 	// likelihood, _, err := t.LikelihoodToBreakRules(ctx, `"I like to hang out with my friends and do nothing in particular at all."`)
 	if err != nil {
 		fmt.Println("error:", err)
