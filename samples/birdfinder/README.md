@@ -4,6 +4,8 @@
 
 Given a page of text, count how many birds there are. Parse the details of each bird, and then generate a nice description.
 
+See generated client usage in [main.go](https://github.com/troylelandshields/hardconversations/blob/main/samples/birdfinder/main.go).
+
 # birdfinder.yaml
 
 ```yaml
@@ -26,4 +28,12 @@ conversations:
         input: github.com/troylelandshields/hardconversations/samples/birdfinder/bird.Bird
         output: string
         prompt: Describe the bird with the given properties and add a fun fact (make it up if you have to)
+```
+
+```go
+birdCount, _, err := t.CountBirds(ctx, str)
+if err != nil {
+  fmt.Println(err)
+  os.Exit(1)
+}
 ```
