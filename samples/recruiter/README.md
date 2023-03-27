@@ -2,6 +2,8 @@
 
 Given a job description and a database of resumes, find the candidates that are most suited to the job and generate an email address to send to them.
 
+See generated client usage in [main.go](https://github.com/troylelandshields/hardconversations/blob/main/samples/recruiter/main.go).
+
 # hardc.yaml
 
 ```yaml
