@@ -28,3 +28,16 @@ conversations:
         input: "github.com/troylelandshields/hardconversations/samples/recruiter/resumes.RecruiterMessageRequest"
         output: github.com/troylelandshields/hardconversations/samples/recruiter/resumes.Email
 ```
+
+## Usage
+
+```go
+rankedResumeIDs, _, err := t.RankResumes(ctx, developerJobDescription)
+if err != nil {
+  return
+}
+
+for _, resumeID := range rankedResumeIDs {
+  ...
+}
+```
