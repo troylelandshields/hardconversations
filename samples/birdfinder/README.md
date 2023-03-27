@@ -1,6 +1,6 @@
 # Bird Finder
 
-# TODO: do images instead of text to keep with the spirit of the xkcd comic.
+> TODO: do images instead of text to keep with the spirit of the xkcd comic.
 
 Given a page of text, count how many birds there are. Parse the details of each bird, and then generate a nice description.
 
