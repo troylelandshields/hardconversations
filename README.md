@@ -3,6 +3,20 @@
 ### Sprinkle some ChatGPT onto your program
 ---
 
+## Quickstart
+
+### Installation
+
+```bash
+go install github.com/troylelandshields/hardconversations/cmd/hardc@latest
+```
+
+### Usage
+
+```bash
+hardc generate -f path/to/file.yaml
+```
+
 ## Soft Inputs
 
 Read this comic:
@@ -83,9 +97,10 @@ Generates a client that you can use like this:
 
 ## More Samples
 
-* Automoderator
+* Inbreddit Automoderator
 * Bird-finder
 * AI Recruiter
+* TODO: HotDog/NotHotDog (once I have access to the ChatGPT4 and can use images as an input)
 
 ## Acknowledgements	
 
