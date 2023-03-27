@@ -10,9 +10,6 @@ conversations:
   - path: "./moderatorai"
     instruction: |
       Given the rules of a community and a piece of text, you are able to determine how likely it is that the text breaks the rules.
-    # init_thread:
-    #   - input: "This is a test"
-    #     output: 0
     questions:
       - function_name: LikelihoodToBreakRules
         prompt: How likely is it that the text breaks the rules? (Answer must be an integer between 0 and 100)
