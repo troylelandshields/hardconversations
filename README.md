@@ -81,5 +81,13 @@ Generates a client that you can use like this:
 	}
 ```
 
+## More Samples
+
+* Automoderator
+* Bird-finder
+* AI Recruiter
+
+## Acknowledgements	
+
 Inspired by SQLc.
 
