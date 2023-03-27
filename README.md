@@ -1,7 +1,6 @@
 # Hard Conversations
 
 ### Sprinkle some ChatGPT onto your program
----
 #### Generate a statically typed client from YAML to interface with ChatGPT for whatever problems you're trying to solve.
 ---
 
