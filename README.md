@@ -106,5 +106,7 @@ Generates a client that you can use like this:
 
 ## Acknowledgements	
 
+Thanks to [go-openai](https://github.com/sashabaranov/go-openai)
+
 Inspired by SQLc.
 
