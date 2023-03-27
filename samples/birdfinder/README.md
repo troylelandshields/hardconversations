@@ -30,6 +30,7 @@ conversations:
         prompt: Describe the bird with the given properties and add a fun fact (make it up if you have to)
 ```
 
+## Usage
 ```go
 birdCount, _, err := t.CountBirds(ctx, str)
 if err != nil {
