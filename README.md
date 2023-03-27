@@ -8,7 +8,7 @@
 ### Installation
 
 ```bash
-go install github.com/troylelandshields/hardconversations/cmd/hardc@latest
+go install github.com/troylelandshields/hardconversations/cmd/hardc
 ```
 
 ### Usage
