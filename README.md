@@ -99,7 +99,7 @@ Generates a client that you can use like this:
 
 ## More Samples
 
-* [Inbreddit Automoderator](https://github.com/troylelandshields/hardconversations/tree/main/samples/moderator)
+* [Breadit Automoderator](https://github.com/troylelandshields/hardconversations/tree/main/samples/moderator)
 * [AI Recruiter](https://github.com/troylelandshields/hardconversations/tree/main/samples/recruiter)
 * [Bird-finder](https://github.com/troylelandshields/hardconversations/tree/main/samples/birdfinder)
 * TODO: HotDog/NotHotDog (once I have access to the ChatGPT4 and can use images as an input)
