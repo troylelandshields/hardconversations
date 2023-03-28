@@ -4,6 +4,10 @@
 #### Generate a statically typed client from YAML to interface with ChatGPT for whatever problems you're trying to solve.
 ---
 
+## Introduction
+
+ChatGPT technology is useful for much more than a user-to-bot chat assistant. Developers can utilize it as a general-purpose, "basic reasoning" API to enhance the types of problems that are easily solved with software, without having to gather and categorize data to train machine-learning models. Hard Conversations comes with a CLI tool to generate a statically typed client to make computer-to-bot interfacing much easier. Jump to the example below to see how works.
+
 ## Quickstart
 
 ### Installation
@@ -43,65 +47,106 @@ Don't worry about fuzzy or soft problems anymore, because with ChatGPT your prog
 
 This tool takes a YAML file as input and generates a client to converse with OpenAI's ChatGPT. In your YAML file, you will list the specific questions you want to be able to ask with the expected inputs and outputs, and HardConversations will generate a client that you can then easily use in your program as you see fit.
 
-## Example
+# Example
 
-For example:
+Let's say you work for a recruiting agency. Your company has a database full of resumes of potential job candidates. Clients come to you with job descriptions. You are tasked with building an automated tool that does all of the following:
+
+1. Find the 3 best candidates for a job description. Candidates can live anywhere, but we should prefer candidates that live in the same state as the job.
+2. Parse the candidates contact info from their resume.
+3. Automatically send an email to the candidates with a description of the job and an invitation to apply.
+
+Let's see how HardConversations can help us solve these problems.
+
+We can define the details of the "conversation" that our application wants to have in a YAML file to make answering these questions easy. We need to give some instructions about the conversation to give some context, and then we define the various types of questions our application can "ask." We will "ask" these questions by calling functions. These questions are going to be directly related to the 3 requirements above.
+
+We also need to define what the input and output should be for each of these questions. For example, if we want to parse candidate info from a resume, we can have HardConversations make sure the answer is returned from ChatGPT as a Go struct called `Candidate`, which has fields for `Name` and `Email`.
+
+Putting this all together in a YAML file looks like this:
  
 ```yaml
 version: 1
-packages:
-  - path: "./moderatorai"
+conversations:
+  - path: "./autorecruiter"
     instruction: |
-      Given the rules of a community and a piece of text, you are able to determine how likely it is that the text breaks the rules.
+      Given a list of resumes, you are able to determine which ones are the best fit for the job description.
     questions:
-      - functionName: LikelihoodToBreakRules
-        prompt: How likely is it that the text breaks the rules? (Answer must be an integer between 0 and 100)
+      - function_name: RankResumes
+        prompt: Return just the IDs of between 1 and 3 resumes in a comma-separated list, ranked from best to worst fit for the job description. Do not include resumes that are not a good fit.
+        input: "string"
+        output: "[]int"
+
+      - function_name: GetCandidateInfo
+        prompt: "Return the candidate info from the resume"
         input: string
-        output: int
-      - functionName: WhichRulesDoesItBreak # to flag specific rules in the UI
-        prompt: Which rule numbers does the text break?
-        output: []int
-      - functionName: WhyDoesItBreakTheRules # to show an explanation to users
-        prompt: Why does it break the rules?
-        output: string
+        output: github.com/troylelandshields/hardconversations/samples/recruiter/resumes.Candidate
+
+      - function_name: GenerateRecruiterMessage
+        prompt: Generate a message to send to the candidate about the job; mention what you like about their resume and why you think they would be a good fit for the job.
+        input: "github.com/troylelandshields/hardconversations/samples/recruiter/resumes.RecruiterMessageRequest"
+        output: github.com/troylelandshields/hardconversations/samples/recruiter/resumes.Email
 ```
 
-Generates a client that you can use like this:
+Now that we've defined this "conversation", we want to be able to write an application that can use this functionality. We use the `hardc` CLI to generate libraries from this YAML file by executing `hardc generate -f path/to/file.yaml`.
+
+Now we have an auto-generated, statically-typed client that we can create like this:
 
 ```go
-	autoModClient := moderatorai.NewClient(openAIKey)
-	autoModClient.WithText(theRules)
-	t := autoModClient.NewThread()
-
-	likelihood, _, err := t.LikelihoodToBreakRules(ctx, `"The thing that I love about Fight Club is getting out my aggression and posting pictures online."`)
-	if err != nil {
-		fmt.Println("error:", err)
-		os.Exit(1)
-	}
-
-	if likelihood < 50 {
-		fmt.Println("no rule breaking here")
-		return
-	}
-
-	rules, _, err := t.WhichRulesDoesItBreak(ctx)
-	if err != nil {
-		fmt.Println("error:", err)
-		os.Exit(1)
-	}
-
-	reason, _, err := t.WhyDoesItBreakTheRules(ctx)
-	if err != nil {
-		fmt.Println("error:", err)
-		os.Exit(1)
-	}
+aiRecruiter := autorecruiter.NewClient(openAIKey)
 ```
+However, that's not all we need for this to work. We need to provide the resumes as a data-source that ChatGPT can utilize to find the best candidates.
+
+To do that, we can add a "source provider" that HardConversations can use to add more contextual information to the conversation with ChatGPT, as needed.
+
+```go
+// resume.ResumeProvider will return a list of resumes from the same state as the job.
+aiRecruiter.AddSourceTextProvider(db.ResumeProvider{})
+
+// we also want to provide out-of-state resumes, but with slightly less preference, so we'll weight them a little less.
+aiRecruiter.AddSourceTextProvider(db.OutOfStateResumeProvider{}, sources.WithWeight(0.95))
+```
+
+Now, we can match resumes with jobs. Let's say we wanted to do it in a web-service. It would look something like this rough outline:
+
+```go
+func HandleNewJob(w http.ResponseWriter, r *http.Request) {
+	// get new job details from the request; description and state
+	var jobDetails Job	
+	json.NewDecoder(r.Body).Decode(&jobDetails)
+
+	// add the job state to the context so it can be used by the resume provider
+	ctx := context.WithValue(r.Context(), jobStateKey, job.State)
+	
+	// create a new thread for this "conversation"
+	thread := aiRecruiter.NewThread()
+
+	// ask ChatGPT to rank the best fitting resumes; the provided sources will be used as contextual info
+	resumeIDs, _, _ := thread.RankResumes(ctx, jobDetails.Description)
+
+	for _, id := range resumeIDs {
+		// get the resume from the database
+		resume, _ := db.LookupResume(id)
+
+		// ask ChatGPT to parse the Candidate details from the unstructured text of the resume
+		candidate, _, _ := thread.GetCandidateInfo(ctx, resume.Text)
+
+		// ask ChatGPT to generate a personalized message that we can send to the candidate
+		personalizedMessage, _, _ := thread.GenerateRecruiterMessage(ctx, RecruiterMessageRequest{
+			Candidate: candidate,
+			ResumeText: resume.Text,
+		})
+
+		// ... send email message
+	}
+}
+```
+
+Solving any single one of these problems in software may have been pretty difficult. Interfacing with ChatGPT in a statically typed way through the client generated by HardConversations, however, we were able to get a working version up-and-running very quickly, and now we can iterate from here to continually measure and improve its success metrics.
 
 ## More Samples
 
 * [Automoderator](https://github.com/troylelandshields/hardconversations/tree/main/samples/moderator)
-* [AI Recruiter](https://github.com/troylelandshields/hardconversations/tree/main/samples/recruiter)
 * [Bird-finder](https://github.com/troylelandshields/hardconversations/tree/main/samples/birdfinder)
+* [AI Recruiter](https://github.com/troylelandshields/hardconversations/tree/main/samples/recruiter)
 * TODO: HotDog/NotHotDog (once I have access to the ChatGPT4 and can use images as an input)
 
 ## Acknowledgements	
