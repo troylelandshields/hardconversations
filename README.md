@@ -114,7 +114,7 @@ func HandleNewJob(w http.ResponseWriter, r *http.Request) {
 	json.NewDecoder(r.Body).Decode(&jobDetails)
 
 	// add the job state to the context so it can be used by the resume provider
-	ctx := context.WithValue(r.Context(), jobStateKey, job.State)
+	ctx := context.WithValue(r.Context(), jobStateKey, jobDetails.State)
 	
 	// create a new thread for this "conversation"
 	thread := aiRecruiter.NewThread()
