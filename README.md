@@ -1,6 +1,4 @@
 # Hard Conversations
-
-### Sprinkle some ChatGPT onto your program
 #### Generate a statically typed client from YAML to interface with ChatGPT for whatever problems you're trying to solve.
 ---
 
@@ -8,24 +6,63 @@
 
 ChatGPT technology is useful for much more than a user-to-bot chat assistant. Developers can utilize it as a general-purpose, "basic reasoning" API to enhance the types of problems that are easily solved with software, without having to gather and categorize data to train machine-learning models. Hard Conversations comes with a CLI tool to generate a statically typed client to make computer-to-bot interfacing much easier. Jump to the example below to see how works.
 
-## Quickstart
+### Quick Example
 
-### Installation
+You have a string and you want to count how many US Presidents are mentioned in it.
+
+YAML -> generate -> Code
+
+Define your question in YAML.
+
+```yaml
+version: 1
+conversations:
+  - path: "./presidents"
+    instruction: |
+      You can count how many US Presidents are listed in some text.
+    questions:
+      - function_name: CountPresidents
+        prompt: How many presidents are mentioned?
+        input: "string"
+        output: "int"
+```
+
+Generate a client with `hardc generate`.
+
+Use your statically typed client to easily build an application.
+
+```go
+	client := presidents.NewClient(openAIKey)
+	countOfPresidents, _, _ := client.CountPresidents()
+
+	if countOfPresidents > 3 {
+		fmt.Println("That's a lot of presidents")
+		return
+	}
+```
+
+[Bigger Example Below](https://github.com/troylelandshields/hardconversations/blob/main/README.md#example)
+
+### Quickstart
+
+#### Installation
 
 ```bash
 go install github.com/troylelandshields/hardconversations/cmd/hardc
 ```
 
-### Usage
+#### Usage
 
 ```bash
 hardc generate # defaults to hardc.yaml
 hardc generate -f path/to/file.yaml
 ```
 
+# Background
+
 ## Soft Inputs
 
-Read this comic:
+This comic is the perfect example of a problem that used to be difficult but is now trivially solved by sprinkling some ChatGPT onto your program with the help of HardConversations.
 
 ![](https://imgs.xkcd.com/comics/tasks.png)
 
