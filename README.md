@@ -70,7 +70,7 @@ Just a year ago you would have thought this comic was a hilarious and biting com
 
 > Detect if the image has a BIRD?! Ha! It's virtually impossible, wait until /r/ProgrammerHumor gets a load of this!
 
-It's 2023 though, and there's a new sheriff in town.
+It's 2023 though, and there's are new rules to play by.
 
 ## No More Excuses
 
@@ -151,7 +151,7 @@ func HandleNewJob(w http.ResponseWriter, r *http.Request) {
 	json.NewDecoder(r.Body).Decode(&jobDetails)
 
 	// add the job state to the context so it can be used by the resume provider
-	ctx := context.WithValue(r.Context(), jobStateKey, job.State)
+	ctx := context.WithValue(r.Context(), jobStateKey, jobDetails.State)
 	
 	// create a new thread for this "conversation"
 	thread := aiRecruiter.NewThread()
