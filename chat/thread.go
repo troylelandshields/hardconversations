@@ -6,8 +6,8 @@ import (
 
 	gogpt "github.com/sashabaranov/go-openai"
 	"github.com/troylelandshields/hardconversations/internal/logger"
-	"github.com/troylelandshields/hardconversations/internal/sources"
 	"github.com/troylelandshields/hardconversations/internal/tokens"
+	"github.com/troylelandshields/hardconversations/sources"
 )
 
 const baseSystemMessage = `You are an assistant interfacing with a machine, so answers must be given in the correct output with no surrounding punctuation. If you can't fulfill the request, respond with "Error: " and then a short explanation. %s

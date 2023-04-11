@@ -7,9 +7,9 @@ import (
 
 	"github.com/troylelandshields/hardconversations/chat"
 	"github.com/troylelandshields/hardconversations/internal/logger"
-	"github.com/troylelandshields/hardconversations/internal/sources"
 	"github.com/troylelandshields/hardconversations/samples/recruiter/autorecruiter"
 	"github.com/troylelandshields/hardconversations/samples/recruiter/resumes"
+	"github.com/troylelandshields/hardconversations/sources"
 )
 
 const (

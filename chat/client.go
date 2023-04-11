@@ -4,8 +4,8 @@ import (
 	"fmt"
 
 	gogpt "github.com/sashabaranov/go-openai"
-	"github.com/troylelandshields/hardconversations/internal/sources"
 	"github.com/troylelandshields/hardconversations/internal/tokens"
+	"github.com/troylelandshields/hardconversations/sources"
 )
 
 type Client struct {

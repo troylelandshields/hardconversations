@@ -53,7 +53,7 @@ func LookupResume(id int) (Resume, error) {
 		}
 	}
 
-	return Resume{}, fmt.Errorf("no resume with id %s", id)
+	return Resume{}, fmt.Errorf("no resume with id %d", id)
 }
 
 type ResumeProvider struct {
