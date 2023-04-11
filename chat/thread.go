@@ -5,8 +5,8 @@ import (
 	"strings"
 
 	gogpt "github.com/sashabaranov/go-openai"
-	"github.com/troylelandshields/hardconversations/internal/logger"
 	"github.com/troylelandshields/hardconversations/internal/tokens"
+	"github.com/troylelandshields/hardconversations/logger"
 	"github.com/troylelandshields/hardconversations/sources"
 )
 
