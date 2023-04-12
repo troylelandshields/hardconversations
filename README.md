@@ -1,5 +1,5 @@
 # Hard Conversations
-#### Generate a statically typed client from YAML to interface with ChatGPT for whatever problems you're trying to solve.
+#### Generate a strongly typed client from YAML to interface with ChatGPT for whatever problems you're trying to solve.
 ---
 
 ## Introduction
