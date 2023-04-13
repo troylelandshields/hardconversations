@@ -57,6 +57,14 @@ func (t *Thread) NewThread(opt ...ConfigOption) *Thread {
 	}
 }
 
+// Completely replaces existing history with the given history.
+func (t *Thread) ReplaceHistory(history []gogpt.ChatCompletionMessage) {
+	t.history = history
+	for _, m := range history {
+		t.historyTokenCount += tokens.MustCount(m.Content)
+	}
+}
+
 func (t *Thread) ExecutePrompt(ctx context.Context, prompt string) (string, Metadata, error) {
 	if t.systemMessageTokens == 0 {
 		t.systemMessageTokens = tokens.MustCount(t.systemMessage)
@@ -135,7 +143,7 @@ func (t *Thread) pushHistory(role, text string) {
 }
 
 func (t *Thread) dropHistory(tokensToDrop int) {
-	if tokensToDrop == t.historyTokenCount {
+	if tokensToDrop >= t.historyTokenCount {
 		t.history = nil
 		return
 	}
