@@ -2,7 +2,6 @@ package chat
 
 import (
 	"context"
-	"strings"
 
 	gogpt "github.com/sashabaranov/go-openai"
 	"github.com/troylelandshields/hardconversations/internal/tokens"
@@ -79,7 +78,7 @@ func (t *Thread) ExecutePrompt(ctx context.Context, prompt string) (string, Meta
 	t.pushHistory(roleUser, prompt)
 
 	// find the source text information and append it to the system message
-	contextInfoStr, err := t.sourceText(
+	contextInfoStr, usedSources, err := t.sourceText(
 		ctx,
 		t.config.MaxTotalTokens-
 			(t.historyTokenCount+t.systemMessageTokens+t.config.MaxResponseTokens),
@@ -119,18 +118,27 @@ func (t *Thread) ExecutePrompt(ctx context.Context, prompt string) (string, Meta
 
 	return responseText,
 		Metadata{
-			RawResponse: resp,
+			RawResponse:     resp,
+			UsedTextSources: usedSources,
 		},
 		nil
 }
 
-func (t *Thread) sourceText(ctx context.Context, allowedTokens int, prompt string) (string, error) {
-	contextualInfo, err := t.Manager.GetSourceText(ctx, t.config.UseEmbeddings, t.config.CosineSimilarityThreshold, allowedTokens, prompt, t.config.UserID)
+func (t *Thread) sourceText(ctx context.Context, allowedTokens int, prompt string) (string, []sources.TextEmbedding, error) {
+	sources, err := t.Manager.GetSourceText(ctx, t.config.UseEmbeddings, t.config.CosineSimilarityThreshold, allowedTokens, prompt, t.config.UserID)
 	if err != nil {
-		return "", err
+		return "", nil, err
 	}
 
-	return strings.Join(contextualInfo, "\n"), nil
+	var contextualInfo string
+	for _, s := range sources {
+		if contextualInfo != "" {
+			contextualInfo += "\n"
+		}
+		contextualInfo += s.Text
+	}
+
+	return contextualInfo, sources, nil
 }
 
 func (t *Thread) pushHistory(role, text string) {
@@ -166,5 +174,6 @@ func (t *Thread) PurgeSources() {
 }
 
 type Metadata struct {
-	RawResponse gogpt.ChatCompletionResponse
+	RawResponse     gogpt.ChatCompletionResponse
+	UsedTextSources []sources.TextEmbedding
 }

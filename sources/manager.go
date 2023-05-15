@@ -70,7 +70,7 @@ func WithAllowErrors() SourceOption[TextEmbeddingProvider] {
 // TODO: this is a bit of a mess, clean it up; also this might be the wrong place to be creating text embeddings since it could lead to a lot of repeated work
 // TODO: support chunking text into smaller pieces
 // TODO: I'm slapping userID as an optional param in here so I can pass it to OpenAI but I don't like it, figure out a better way
-func (t *Manager) GetSourceText(ctx context.Context, sortByRelevance bool, minCosineSimilarityThreshold float64, allowedTokens int, prompt string, userID string) ([]string, error) {
+func (t *Manager) GetSourceText(ctx context.Context, sortByRelevance bool, minCosineSimilarityThreshold float64, allowedTokens int, prompt string, userID string) ([]TextEmbedding, error) {
 	if !sortByRelevance {
 		return t.getSourceTextSimple(ctx, allowedTokens, prompt)
 	}
@@ -79,8 +79,8 @@ func (t *Manager) GetSourceText(ctx context.Context, sortByRelevance bool, minCo
 }
 
 // getSourceTextSimple just pulls text from the sources in order of weight until we run out of tokens
-func (t *Manager) getSourceTextSimple(ctx context.Context, allowedTokens int, prompt string) ([]string, error) {
-	var contextualInfos []string
+func (t *Manager) getSourceTextSimple(ctx context.Context, allowedTokens int, prompt string) ([]TextEmbedding, error) {
+	var contextualInfos []TextEmbedding
 
 	logger.Debugf("Pulling contextual info from source %d text providers...", len(t.textProviders))
 	for _, source := range t.textProviders {
@@ -116,7 +116,7 @@ func (t *Manager) getSourceTextSimple(ctx context.Context, allowedTokens int, pr
 			}
 
 			sourceUsedTokens += tokenCnt
-			contextualInfos = append(contextualInfos, sourceTextEmbedding.Text)
+			contextualInfos = append(contextualInfos, sourceTextEmbedding)
 		}
 		allowedTokens -= sourceUsedTokens
 		if allowedTokens <= 0 {
@@ -128,20 +128,20 @@ func (t *Manager) getSourceTextSimple(ctx context.Context, allowedTokens int, pr
 }
 
 type contextualInfo struct {
-	Text                     string
-	TokenCnt                 int
+	Source                   TextEmbedding
 	WeightedCosineSimilarity float64
 	tokensLeft               *int
 }
 
 // getSourceTextRelevant gets all the sources, filter and sort by cosine similarity, then pull the top ones until we run out of tokens
-func (t *Manager) getSourceTextRelevant(ctx context.Context, minCosineSimilarityThreshold float64, allowedTokens int, prompt string, userID string) ([]string, error) {
+func (t *Manager) getSourceTextRelevant(ctx context.Context, minCosineSimilarityThreshold float64, allowedTokens int, prompt string, userID string) ([]TextEmbedding, error) {
 	var contextualInfos []contextualInfo
 
-	promptEmbeddings, err := t.getTextEmbeddings(ctx, []TextEmbedding{{Text: prompt}}, userID)
+	promptEmbeddings, err := t.CreateTextEmbeddingsFromStrings(ctx, []string{prompt}, userID)
 	if err != nil {
 		return nil, err
 	}
+	// TODO: what if this gets chunked?
 	promptEmbedding := promptEmbeddings[0]
 
 	logger.Debugf("Pulling contextual info from source %d text providers...", len(t.textProviders))
@@ -160,45 +160,20 @@ func (t *Manager) getSourceTextRelevant(ctx context.Context, minCosineSimilarity
 			continue
 		}
 
-		var missingEmbeddings bool
-		for _, sourceTextEmbedding := range sourceTextEmbeddings {
-			tokenCnt, err := tokens.Count(sourceTextEmbedding.Text)
-			if err != nil {
-				if !source.allowErrors {
-					return nil, err
-				}
-				logger.Debugf("Source %T errored: %v", source.provider, err)
-				continue
+		allSourceInfo, err = t.CreateTextEmbeddings(ctx, sourceTextEmbeddings, userID)
+		if err != nil {
+			if !source.allowErrors {
+				return nil, err
 			}
-			sourceTextEmbedding.TokenCount = tokenCnt
-
-			// get text embeddings if we need them
-			// if any of the sources don't have embeddings, then we will get them all
-			if len(sourceTextEmbedding.Embedding) == 0 {
-				missingEmbeddings = true
-
-				// if the text is too long, skip it until we can support chunking
-				if tokenCnt > 8192 {
-					logger.Debugf("Source %T text too long to create embeddings and I haven't added support for chunking yet, skipping", source.provider)
-					continue
-				}
-			}
-
-			allSourceInfo = append(allSourceInfo, sourceTextEmbedding)
-		}
-
-		if missingEmbeddings {
-			allSourceInfo, err = t.getTextEmbeddings(ctx, allSourceInfo, userID)
-			if err != nil {
-				if !source.allowErrors {
-					return nil, err
-				}
-				logger.Debugf("Source %T errored: %v", source.provider, err)
-				continue
-			}
+			logger.Debugf("Source %T errored: %v", source.provider, err)
+			continue
 		}
 
 		for _, sourceTextEmbedding := range allSourceInfo {
+			if sourceTextEmbedding.Weight == 0 {
+				sourceTextEmbedding.Weight = source.weight
+			}
+
 			// get cosine similarity
 			cosineSimilarity, err := t.cosineSimilarity(sourceTextEmbedding.Embedding, promptEmbedding.Embedding)
 			if err != nil {
@@ -209,15 +184,14 @@ func (t *Manager) getSourceTextRelevant(ctx context.Context, minCosineSimilarity
 				continue
 			}
 
-			weightedCosineSimilarity := float64(cosineSimilarity) * source.weight
+			weightedCosineSimilarity := float64(cosineSimilarity) * sourceTextEmbedding.Weight
 			if weightedCosineSimilarity < minCosineSimilarityThreshold {
 				logger.Debugf("Cosine similarity of %f is below threshold of %f, skipping", cosineSimilarity, minCosineSimilarityThreshold)
 				continue
 			}
 
 			contextualInfos = append(contextualInfos, contextualInfo{
-				Text:                     sourceTextEmbedding.Text,
-				TokenCnt:                 sourceTextEmbedding.TokenCount,
+				Source:                   sourceTextEmbedding,
 				WeightedCosineSimilarity: weightedCosineSimilarity,
 				tokensLeft:               &sourceMax,
 			})
@@ -230,16 +204,16 @@ func (t *Manager) getSourceTextRelevant(ctx context.Context, minCosineSimilarity
 	})
 
 	// add contextualInfos to contextualText until we run out of tokens
-	var contextualText []string
+	var contextualText []TextEmbedding
 	for _, ci := range contextualInfos {
 		// if not enough tokens left, skip it
-		if ci.TokenCnt > *ci.tokensLeft || ci.TokenCnt > allowedTokens {
+		if ci.Source.tokenCount > *ci.tokensLeft || ci.Source.tokenCount > allowedTokens {
 			continue
 		}
 		// reduce source's tokens left and allowed tokens
-		*ci.tokensLeft -= ci.TokenCnt
-		allowedTokens -= ci.TokenCnt
-		contextualText = append(contextualText, ci.Text)
+		*ci.tokensLeft -= ci.Source.tokenCount
+		allowedTokens -= ci.Source.tokenCount
+		contextualText = append(contextualText, ci.Source)
 		if allowedTokens <= 0 {
 			break
 		}

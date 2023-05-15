@@ -8,12 +8,34 @@ import (
 	"github.com/drewlanenga/govector"
 	"github.com/pkg/errors"
 	gogpt "github.com/sashabaranov/go-openai"
+	"github.com/troylelandshields/hardconversations/internal/tokens"
+)
+
+const (
+	maxEmbeddingTokenCount = 2048
 )
 
 type TextEmbedding struct {
-	Text       string
-	Embedding  []float32
-	TokenCount int
+	// Text that can be used as a data source for the AI
+	Text string
+	// Embedding of the text; if it will be used and it is not provided then API requests will be made to get it
+	Embedding []float32
+	// Optional metadata that can be used to identify the source; sources that get used will be returned in the metadata response, so this field can be used to pass more information about the source
+	Metadata interface{}
+
+	// Optional weight to use for this specific source text; defaults to the weight of the source provider
+	Weight float64
+
+	chunk      int // if the text is chunked, this is the chunk number
+	tokenCount int
+}
+
+func (t *TextEmbedding) TokenCount() int {
+	return t.tokenCount
+}
+
+func (t *TextEmbedding) Chunk() int {
+	return t.chunk
 }
 
 type TextEmbeddingProvider interface {
@@ -35,11 +57,27 @@ func (t *Manager) addSourceTextEmbeddingProvider(provider TextEmbeddingProvider,
 	})
 }
 
+func (t *Manager) CreateTextEmbeddingsFromStrings(ctx context.Context, text []string, userID string) ([]TextEmbedding, error) {
+	var embeddings []TextEmbedding
+	for _, te := range text {
+		embeddings = append(embeddings, TextEmbedding{Text: te})
+	}
+
+	return t.CreateTextEmbeddings(ctx, embeddings, userID)
+}
+
 // TODO: handle userID another way
-func (t *Manager) getTextEmbeddings(ctx context.Context, textEmbeddings []TextEmbedding, userID string) ([]TextEmbedding, error) {
+func (t *Manager) CreateTextEmbeddings(ctx context.Context, textEmbeddings []TextEmbedding, userID string) ([]TextEmbedding, error) {
 	var inputs []string
+	var results []TextEmbedding
+	var err error
 	for _, te := range textEmbeddings {
 		if len(te.Embedding) > 0 {
+			te.tokenCount, err = tokens.Count(te.Text)
+			if err != nil {
+				return nil, errors.Wrap(err, "error counting tokens")
+			}
+			results = append(results, te)
 			continue
 		}
 
@@ -50,7 +88,31 @@ func (t *Manager) getTextEmbeddings(ctx context.Context, textEmbeddings []TextEm
 		text = strings.ReplaceAll(text, "  ", " ")
 		text = strings.ReplaceAll(text, "  ", " ")
 
-		inputs = append(inputs, text)
+		chunks, err := tokens.Chunk(text, maxEmbeddingTokenCount)
+		if err != nil {
+			return nil, errors.Wrap(err, "error chunking text")
+		}
+
+		for i, chunk := range chunks {
+			tokenCnt, err := tokens.Count(chunk)
+			if err != nil {
+				return nil, errors.Wrap(err, "error counting tokens")
+			}
+			inputs = append(inputs, chunk)
+			results = append(results, TextEmbedding{
+				Text:       chunk,
+				Weight:     te.Weight,
+				Metadata:   te.Metadata,
+				chunk:      i,
+				tokenCount: tokenCnt,
+			})
+		}
+
+	}
+
+	// no inputs were missing embeddings, so no need to make a request
+	if len(inputs) == 0 {
+		return results, nil
 	}
 
 	resp, err := t.ai.CreateEmbeddings(ctx, gogpt.EmbeddingRequest{
@@ -63,10 +125,13 @@ func (t *Manager) getTextEmbeddings(ctx context.Context, textEmbeddings []TextEm
 	}
 
 	for i, embedding := range resp.Data {
-		textEmbeddings[i].Embedding = embedding.Embedding
+		if len(results[i].Embedding) > 0 {
+			continue
+		}
+		results[i].Embedding = embedding.Embedding
 	}
 
-	return textEmbeddings, nil
+	return results, nil
 }
 
 func (t *Manager) cosineSimilarity(a, b []float32) (float64, error) {
