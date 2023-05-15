@@ -43,7 +43,7 @@ type TextEmbeddingProvider interface {
 }
 
 // TODO: figure out how to make this a good idea and make it public if so
-func (t *Manager) addSourceTextEmbeddingProvider(provider TextEmbeddingProvider, opt ...SourceOption[TextEmbeddingProvider]) {
+func (t *Manager) AddSourceTextEmbeddingProvider(provider TextEmbeddingProvider, opt ...SourceOption[TextEmbeddingProvider]) {
 	source := source[TextEmbeddingProvider]{provider: provider, weight: 1.0}
 	for _, o := range opt {
 		o(&source)

@@ -7,11 +7,11 @@ type TextProvider interface {
 }
 
 func (t *Manager) AddSourceText(text string, opt ...SourceOption[TextEmbeddingProvider]) {
-	t.addSourceTextEmbeddingProvider(hardCodedTextProvider{Text: text}, opt...)
+	t.AddSourceTextEmbeddingProvider(hardCodedTextProvider{Text: text}, opt...)
 }
 
 func (t *Manager) AddSourceTextProvider(provider TextProvider, opt ...SourceOption[TextEmbeddingProvider]) {
-	t.addSourceTextEmbeddingProvider(textProviderAdapter{provider}, opt...)
+	t.AddSourceTextEmbeddingProvider(textProviderAdapter{provider}, opt...)
 }
 
 // adapters to convert a TextProvider to a TextEmbeddingProvider--the chat client will fill in empty embeddings if necessary
