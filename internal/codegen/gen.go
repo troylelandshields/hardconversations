@@ -2,8 +2,8 @@ package codegen
 
 import (
 	"bytes"
-	"html/template"
 	"strings"
+	"text/template"
 
 	"github.com/troylelandshields/hardconversations/internal/config"
 )
