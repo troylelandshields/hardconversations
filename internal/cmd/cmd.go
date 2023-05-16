@@ -53,7 +53,7 @@ var versionCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		defer trace.StartRegion(cmd.Context(), "version").End()
 		if version == "" {
-			fmt.Printf("%s\n", "0.0.1")
+			fmt.Printf("%s\n", "0.0.7")
 		} else {
 			fmt.Printf("%s\n", version)
 		}
