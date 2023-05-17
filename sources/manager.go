@@ -33,10 +33,11 @@ func NewFromParent(m *Manager) *Manager {
 }
 
 type source[T any] struct {
-	provider    T
-	weight      float64
-	maxTokens   int
-	allowErrors bool
+	provider       T
+	weight         float64
+	maxTokens      int
+	allowErrors    bool
+	skipEmbeddings bool
 }
 
 // add other source options, like description
@@ -49,6 +50,13 @@ type SourceOption[T any] func(*source[T])
 func WithWeight(w float64) SourceOption[TextEmbeddingProvider] {
 	return func(s *source[TextEmbeddingProvider]) {
 		s.weight = w
+	}
+}
+
+// WithSkipEmbeddings makes it so embeddings will not be created or used to determine it's relevance; a cosine similarity of 1.0 will be assigned instead. This source will still be added in order according to its weight.
+func WithSkipEmbeddings() SourceOption[TextEmbeddingProvider] {
+	return func(s *source[TextEmbeddingProvider]) {
+		s.skipEmbeddings = true
 	}
 }
 
@@ -146,7 +154,6 @@ func (t *Manager) getSourceTextRelevant(ctx context.Context, minCosineSimilarity
 
 	logger.Debugf("Pulling contextual info from source %d text providers...", len(t.textProviders))
 	for _, source := range t.textProviders {
-		var allSourceInfo []TextEmbedding
 		sourceMax := source.maxTokens
 		if sourceMax == 0 {
 			sourceMax = allowedTokens
@@ -160,13 +167,16 @@ func (t *Manager) getSourceTextRelevant(ctx context.Context, minCosineSimilarity
 			continue
 		}
 
-		allSourceInfo, err = t.CreateTextEmbeddings(ctx, sourceTextEmbeddings, userID)
-		if err != nil {
-			if !source.allowErrors {
-				return nil, err
+		allSourceInfo := sourceTextEmbeddings
+		if !source.skipEmbeddings {
+			allSourceInfo, err = t.CreateTextEmbeddings(ctx, sourceTextEmbeddings, userID)
+			if err != nil {
+				if !source.allowErrors {
+					return nil, err
+				}
+				logger.Debugf("Source %T errored: %v", source.provider, err)
+				continue
 			}
-			logger.Debugf("Source %T errored: %v", source.provider, err)
-			continue
 		}
 
 		for _, sourceTextEmbedding := range allSourceInfo {
@@ -175,13 +185,16 @@ func (t *Manager) getSourceTextRelevant(ctx context.Context, minCosineSimilarity
 			}
 
 			// get cosine similarity
-			cosineSimilarity, err := t.cosineSimilarity(sourceTextEmbedding.Embedding, promptEmbedding.Embedding)
-			if err != nil {
-				if !source.allowErrors {
-					return nil, errors.Wrap(err, "failed to get cosine similarity")
+			cosineSimilarity := 1.0
+			if !source.skipEmbeddings {
+				cosineSimilarity, err = t.cosineSimilarity(sourceTextEmbedding.Embedding, promptEmbedding.Embedding)
+				if err != nil {
+					if !source.allowErrors {
+						return nil, errors.Wrap(err, "failed to get cosine similarity")
+					}
+					logger.Debugf("Source %T errored: %v", source.provider, err)
+					continue
 				}
-				logger.Debugf("Source %T errored: %v", source.provider, err)
-				continue
 			}
 
 			weightedCosineSimilarity := float64(cosineSimilarity) * sourceTextEmbedding.Weight
