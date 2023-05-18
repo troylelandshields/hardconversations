@@ -63,11 +63,11 @@ func (t *Manager) CreateTextEmbeddingsFromStrings(ctx context.Context, text []st
 		embeddings = append(embeddings, TextEmbedding{Text: te})
 	}
 
-	return t.CreateTextEmbeddings(ctx, embeddings, userID)
+	return t.PrepareForQuerying(ctx, embeddings, userID, false)
 }
 
 // TODO: handle userID another way
-func (t *Manager) CreateTextEmbeddings(ctx context.Context, textEmbeddings []TextEmbedding, userID string) ([]TextEmbedding, error) {
+func (t *Manager) PrepareForQuerying(ctx context.Context, textEmbeddings []TextEmbedding, userID string, skipEmbeddings bool) ([]TextEmbedding, error) {
 	var inputs []string
 	var results []TextEmbedding
 	var err error
@@ -83,11 +83,6 @@ func (t *Manager) CreateTextEmbeddings(ctx context.Context, textEmbeddings []Tex
 
 		text := te.Text
 
-		text = strings.ReplaceAll(text, "\n", " ")
-		text = strings.ReplaceAll(text, "\\n", " ")
-		text = strings.ReplaceAll(text, "  ", " ")
-		text = strings.ReplaceAll(text, "  ", " ")
-
 		chunks, err := tokens.Chunk(text, maxEmbeddingTokenCount)
 		if err != nil {
 			return nil, errors.Wrap(err, "error chunking text")
@@ -98,7 +93,7 @@ func (t *Manager) CreateTextEmbeddings(ctx context.Context, textEmbeddings []Tex
 			if err != nil {
 				return nil, errors.Wrap(err, "error counting tokens")
 			}
-			inputs = append(inputs, chunk)
+			inputs = append(inputs, textEmbeddingPrep(chunk))
 			results = append(results, TextEmbedding{
 				Text:       chunk,
 				Weight:     te.Weight,
@@ -107,11 +102,10 @@ func (t *Manager) CreateTextEmbeddings(ctx context.Context, textEmbeddings []Tex
 				tokenCount: tokenCnt,
 			})
 		}
-
 	}
 
 	// no inputs were missing embeddings, so no need to make a request
-	if len(inputs) == 0 {
+	if len(inputs) == 0 || skipEmbeddings {
 		return results, nil
 	}
 
@@ -144,4 +138,12 @@ func (t *Manager) cosineSimilarity(a, b []float32) (float64, error) {
 		return 0, err
 	}
 	return govector.Cosine(aVec, bVec)
+}
+
+func textEmbeddingPrep(s string) string {
+	s = strings.ReplaceAll(s, "\n", " ")
+	s = strings.ReplaceAll(s, "\\n", " ")
+	s = strings.ReplaceAll(s, "  ", " ")
+	s = strings.ReplaceAll(s, "  ", " ")
+	return s
 }

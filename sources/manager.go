@@ -167,16 +167,13 @@ func (t *Manager) getSourceTextRelevant(ctx context.Context, minCosineSimilarity
 			continue
 		}
 
-		allSourceInfo := sourceTextEmbeddings
-		if !source.skipEmbeddings {
-			allSourceInfo, err = t.CreateTextEmbeddings(ctx, sourceTextEmbeddings, userID)
-			if err != nil {
-				if !source.allowErrors {
-					return nil, err
-				}
-				logger.Debugf("Source %T errored: %v", source.provider, err)
-				continue
+		allSourceInfo, err := t.PrepareForQuerying(ctx, sourceTextEmbeddings, userID, source.skipEmbeddings)
+		if err != nil {
+			if !source.allowErrors {
+				return nil, err
 			}
+			logger.Debugf("Source %T errored: %v", source.provider, err)
+			continue
 		}
 
 		for _, sourceTextEmbedding := range allSourceInfo {
@@ -184,7 +181,7 @@ func (t *Manager) getSourceTextRelevant(ctx context.Context, minCosineSimilarity
 				sourceTextEmbedding.Weight = source.weight
 			}
 
-			// get cosine similarity
+			// get cosine similarity or use 1.0 if we're skipping embeddings
 			cosineSimilarity := 1.0
 			if !source.skipEmbeddings {
 				cosineSimilarity, err = t.cosineSimilarity(sourceTextEmbedding.Embedding, promptEmbedding.Embedding)
