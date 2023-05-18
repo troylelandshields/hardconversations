@@ -167,7 +167,7 @@ func (t *Manager) getSourceTextRelevant(ctx context.Context, minCosineSimilarity
 			continue
 		}
 
-		allSourceInfo, err := t.PrepareForQuerying(ctx, sourceTextEmbeddings, userID, source.skipEmbeddings)
+		allSourceInfo, err := t.prepareForQuerying(ctx, sourceTextEmbeddings, userID, source.skipEmbeddings)
 		if err != nil {
 			if !source.allowErrors {
 				return nil, err

@@ -63,11 +63,15 @@ func (t *Manager) CreateTextEmbeddingsFromStrings(ctx context.Context, text []st
 		embeddings = append(embeddings, TextEmbedding{Text: te})
 	}
 
-	return t.PrepareForQuerying(ctx, embeddings, userID, false)
+	return t.CreateTextEmbeddings(ctx, embeddings, userID)
+}
+
+func (t *Manager) CreateTextEmbeddings(ctx context.Context, textEmbeddings []TextEmbedding, userID string) ([]TextEmbedding, error) {
+	return t.prepareForQuerying(ctx, textEmbeddings, userID, false)
 }
 
 // TODO: handle userID another way
-func (t *Manager) PrepareForQuerying(ctx context.Context, textEmbeddings []TextEmbedding, userID string, skipEmbeddings bool) ([]TextEmbedding, error) {
+func (t *Manager) prepareForQuerying(ctx context.Context, textEmbeddings []TextEmbedding, userID string, skipEmbeddings bool) ([]TextEmbedding, error) {
 	var inputs []string
 	var results []TextEmbedding
 	var err error
