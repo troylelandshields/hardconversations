@@ -16,6 +16,8 @@ const (
 )
 
 type TextEmbedding struct {
+	// Identifier that uniquely identifies this text embedding (e.g., a pageID or documentID). If this embedding is chunked, this Identifier will have the chunk idx appended to it
+	Identifier string
 	// Text that can be used as a data source for the AI
 	Text string
 	// Embedding of the text; if it will be used and it is not provided then API requests will be made to get it
