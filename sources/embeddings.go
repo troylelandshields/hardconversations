@@ -26,8 +26,9 @@ type TextEmbedding struct {
 	// Optional weight to use for this specific source text; defaults to the weight of the source provider
 	Weight float64
 
-	chunk      int // if the text is chunked, this is the chunk number
-	tokenCount int
+	chunk       int // if the text is chunked, this is the chunk number
+	totalChunks int
+	tokenCount  int
 }
 
 func (t *TextEmbedding) TokenCount() int {
@@ -36,6 +37,10 @@ func (t *TextEmbedding) TokenCount() int {
 
 func (t *TextEmbedding) Chunk() int {
 	return t.chunk
+}
+
+func (t *TextEmbedding) TotalChunks() int {
+	return t.totalChunks
 }
 
 type TextEmbeddingProvider interface {
@@ -99,11 +104,12 @@ func (t *Manager) prepareForQuerying(ctx context.Context, textEmbeddings []TextE
 			}
 			inputs = append(inputs, textEmbeddingPrep(chunk))
 			results = append(results, TextEmbedding{
-				Text:       chunk,
-				Weight:     te.Weight,
-				Metadata:   te.Metadata,
-				chunk:      i,
-				tokenCount: tokenCnt,
+				Text:        chunk,
+				Weight:      te.Weight,
+				Metadata:    te.Metadata,
+				chunk:       i,
+				totalChunks: len(chunks),
+				tokenCount:  tokenCnt,
 			})
 		}
 	}
