@@ -3,6 +3,7 @@ package sources
 import (
 	"context"
 	"sort"
+	"strconv"
 	"strings"
 
 	"github.com/drewlanenga/govector"
@@ -92,6 +93,7 @@ func (t *Manager) prepareForQuerying(ctx context.Context, textEmbeddings []TextE
 			continue
 		}
 
+		identifier := te.Identifier
 		text := te.Text
 
 		chunks, err := tokens.Chunk(text, maxEmbeddingTokenCount)
@@ -106,6 +108,7 @@ func (t *Manager) prepareForQuerying(ctx context.Context, textEmbeddings []TextE
 			}
 			inputs = append(inputs, textEmbeddingPrep(chunk))
 			results = append(results, TextEmbedding{
+				Identifier:  identifier + "--" + strconv.Itoa(i),
 				Text:        chunk,
 				Weight:      te.Weight,
 				Metadata:    te.Metadata,
