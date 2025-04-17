@@ -12,7 +12,7 @@ require (
 	github.com/rs/zerolog v1.29.0 // indirect
 	github.com/samber/go-gpt-3-encoder v0.3.1 // indirect
 	github.com/samber/lo v1.37.0 // indirect
-	github.com/sashabaranov/go-openai v1.5.7 // indirect
+	github.com/sashabaranov/go-openai v1.38.1 // indirect
 	github.com/spf13/cobra v1.6.1 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	golang.org/x/exp v0.0.0-20220303212507-bbda1eaf7a17 // indirect

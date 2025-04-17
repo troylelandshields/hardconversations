@@ -126,7 +126,7 @@ func (t *Manager) prepareForQuerying(ctx context.Context, textEmbeddings []TextE
 
 	resp, err := t.ai.CreateEmbeddings(ctx, gogpt.EmbeddingRequest{
 		Input: inputs,
-		Model: gogpt.AdaEmbeddingV2,
+		Model: gogpt.SmallEmbedding3,
 		User:  userID,
 	})
 	if err != nil {
